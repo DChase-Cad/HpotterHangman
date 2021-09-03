@@ -13,7 +13,18 @@ from words import word_list, descriptions
 
 pygame.init()
 pygame.mixer.music.load(os.path.join('assets','hedwig.mid'))
-pygame.mixer.music.play(-1)
+
+
+#music setup
+VOL_NUM=1
+vol_image_rect=(5,5,300,300)
+vol_1=pygame.mixer.music.get_volume()/50
+vol_2=vol_1*10
+vol_3=1
+
+pygame.mixer.music.set_volume(vol_1)
+pygame.mixer.music.play()
+
 
 # display setup
 WIDTH, HEIGHT = 1080, 760
@@ -37,6 +48,11 @@ for i in range(13, -1, -1):
         'assets', f'hangman{i}.jpg')).convert()
     images.append(image)
 
+#vol images loading
+volume_images=[]
+for i in range(0,4):
+    image=pygame.image.load(os.path.join('assets',f'vol_{i}.jpg')).convert()
+    volume_images.append(image)
 
 # global game vars
 HIGH_SCORE=0
@@ -79,6 +95,30 @@ def display_message(message, desc):
     pygame.display.update()
     pygame.time.delay(6000)
 
+def set_volume():
+    global VOL_NUM
+    if VOL_NUM==3:
+        VOL_NUM=0
+    else:
+        VOL_NUM+=1
+    if VOL_NUM==0:
+        pygame.mixer.music.set_volume(0)
+    if VOL_NUM==1:
+        pygame.mixer.music.set_volume(vol_1)
+    if VOL_NUM==2:
+        pygame.mixer.music.set_volume(vol_2)
+    if VOL_NUM==3:
+        pygame.mixer.music.set_volume(vol_3)
+    
+
+    
+def draw_volume():
+    global vol_image_rect
+    
+    win.blit(volume_images[VOL_NUM],(5,5))
+    pygame.display.update()
+
+
 def display():
     '''drawing the assets'''
     win.fill(WHITE)
@@ -112,6 +152,7 @@ def display():
     text=LETTER_FONT.render(f'Remaining Attempts: {ATTEMPTS}',1,RED)
     win.blit(text,(120,470))
 
+    draw_volume()
     pygame.display.update()
 
 
@@ -131,6 +172,8 @@ def main():
                 return RUN
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_x, mouse_y = pygame.mouse.get_pos()
+                if 5<mouse_x<50 and 5<mouse_y<50:
+                    set_volume()
                 for letter in LETTERS:
                     x, y, ltr, vis = letter
                     distance = math.sqrt((x-mouse_x)**2+(y-mouse_y)**2)
@@ -148,8 +191,6 @@ def main():
                 print(event.key)
                 if event.key >=97 and event.key <=122:
                     ltr=chr(event.key).upper()
-                    
-                    print(ltr)  
                     for letter in LETTERS:
                         if ltr not in GUESSED and letter[2]==ltr:
                             letter[3] = False
@@ -161,6 +202,7 @@ def main():
                                 HANGMAN_STATUS += 1
                                 ATTEMPTS-=1
                                 display()
+                
 
         won = True
         for letter in WORDS:
