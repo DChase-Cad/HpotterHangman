@@ -11,6 +11,8 @@ import pygame
 from words import word_list, descriptions
 
 pygame.init()
+pygame.mixer.music.load(os.path.join('assets','hedwig.mid'))
+pygame.mixer.music.play(-1)
 
 # display setup
 WIDTH, HEIGHT = 1080, 760
