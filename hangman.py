@@ -8,6 +8,7 @@ import random
 import os
 import math
 import pygame
+from pygame.constants import KEYDOWN
 from words import word_list, descriptions
 
 pygame.init()
@@ -27,6 +28,7 @@ WORD_FONT = pygame.font.Font(os.path.join('assets', 'HP.ttf'), 50)
 # game colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+RED = (220,20,60)
 
 # hangman image loading
 images = []
@@ -37,7 +39,9 @@ for i in range(13, -1, -1):
 
 
 # global game vars
-HANGMAN_STATUS = 6
+HIGH_SCORE=0
+ATTEMPTS=13
+HANGMAN_STATUS = 0
 WORD_INDEX = 0
 WORDS = ''
 DESCRIPTION = ''
@@ -53,7 +57,6 @@ START_Y = 600
 def init():
     '''to reset global variables when playing again'''
     global HANGMAN_STATUS, WORD_INDEX, WORDS, DESCRIPTION, GUESSED,LETTERS
-    HANGMAN_STATUS = 6
     LETTERS=[]
     for i in range(26):
         x = START_X + GAP * 2 + ((RADIUS * 2 + GAP) * (i % 13))
@@ -80,6 +83,10 @@ def display():
     '''drawing the assets'''
     win.fill(WHITE)
 
+    #High Score
+    text = WORD_FONT.render(f'High Score: {HIGH_SCORE}', 1, BLACK)
+    win.blit(text,(800,40))
+
     # buttons with LETTERS
     for letter in LETTERS:
         x, y, ltr, visible = letter
@@ -98,16 +105,20 @@ def display():
 
     text = WORD_FONT.render(display_word, 1, BLACK)
     win.blit(text, (425, 250))
-
+    #hangman image
     win.blit(images[HANGMAN_STATUS], (50, 200))
+
+    #attempts left
+    text=LETTER_FONT.render(f'Remaining Attempts: {ATTEMPTS}',1,RED)
+    win.blit(text,(120,470))
+
     pygame.display.update()
 
 
 def main():
     """game loop"""
     init()
-    global GUESSED
-    global HANGMAN_STATUS
+    global HANGMAN_STATUS, HIGH_SCORE, ATTEMPTS, GUESSED
     FPS = 60
     clock = pygame.time.Clock()
     RUN = True
@@ -131,12 +142,25 @@ def main():
                             test = True
                         if not test:
                             HANGMAN_STATUS += 1
-            # if event.type==pygame.KEYDOWN:
-                #figure out if the key they pressed is a letter
-                #if its a letter test if its in guessed
-                #if its not in guessed, add to guessed letters
-                #if letter is in the word fill in all instances
-                #if its not in the word progress the hung man
+                            ATTEMPTS-=1
+
+            if event.type==KEYDOWN:
+                print(event.key)
+                if event.key >=97 and event.key <=122:
+                    ltr=chr(event.key).upper()
+                    
+                    print(ltr)  
+                    for letter in LETTERS:
+                        if ltr not in GUESSED and letter[2]==ltr:
+                            letter[3] = False
+                            test = False
+                            GUESSED.append(ltr)
+                            if ltr in WORDS:
+                                test = True
+                            if not test:
+                                HANGMAN_STATUS += 1
+                                ATTEMPTS-=1
+                                display()
 
         won = True
         for letter in WORDS:
@@ -147,12 +171,13 @@ def main():
             pygame.time.delay(500)
             display_message(f"You WON! The word was:  {WORDS}", DESCRIPTION)
             RUN=False
+            HIGH_SCORE+=1
 
         if HANGMAN_STATUS == 13:
             display()
             pygame.time.delay(500)
             display_message(f"You lost, the word was:  {WORDS}", DESCRIPTION)
-            RUN=False
+            return False
     return True
 
 while True:
