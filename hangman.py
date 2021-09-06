@@ -73,7 +73,6 @@ START_Y = 600
 
 def init():
     '''to reset global variables when playing again'''
-    print(len(descriptions), len(word_list))
     global HANGMAN_STATUS, WORD_INDEX, WORDS, DESCRIPTION, GUESSED, LETTERS, ATTEMPTS
     LETTERS = []
     for i in range(26):
@@ -86,15 +85,14 @@ def init():
 
 def display_message(message, desc):
     '''prints display message to the screen'''
-    pygame.time.delay(500)
     win.fill(WHITE)
     text = WORD_FONT.render(message, 1, BLACK)
     win.blit(text, (WIDTH/2 - text.get_width() /
              2, HEIGHT/2 - text.get_height()/2))
-    text = DESC_FONT.render(desc, 1, BLACK)
+    text = DESC_FONT.render(desc, 1,RED)
     win.blit(text, (WIDTH/2 - text.get_width()/2, HEIGHT/2+text.get_height()))
     pygame.display.update()
-    pygame.time.delay(2500)
+
 
 
 def set_volume():
@@ -138,13 +136,22 @@ def title_screen():
             if event.type == KEYDOWN and event.key == 13:
                 return
 
+def enter_to_continue():
+    text = DESC_FONT.render(
+        "Press 'Enter' or click anywhere to continue!!!", 1, BLACK)
+    win.blit(text, (WIDTH/2 - text.get_width() /
+             2, HEIGHT/2 + 7*text.get_height()))
+    pygame.display.update()
+    while True:
+        for event in pygame.event.get():
+            if (event.type == KEYDOWN and event.key == 13) or (event.type==pygame.MOUSEBUTTONDOWN and event.button==1):
+                return
 
 def gameOver():
     '''game over functionality'''
-    global HANGMAN_STATUS, HIGH_SCORE, ATTEMPTS
-    print(HANGMAN_STATUS)
-    display_message(
-        f"Game Over, you achieved a high score of {HIGH_SCORE}!", "Play again? (Y/N)")
+    global HANGMAN_STATUS, HIGH_SCORE, ATTEMPTS,WORDS
+    pygame.time.delay(10)
+    display_message(f"Game Over, you achieved a high score of {HIGH_SCORE}!", "Play again? (Y/N)")
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -257,6 +264,7 @@ def main():
             display()
             pygame.time.delay(500)
             display_message(f"You WON! The word was:  {WORDS}", DESCRIPTION)
+            enter_to_continue()
             RUN = False
             HIGH_SCORE += 1
 
@@ -264,6 +272,8 @@ def main():
             display()
             pygame.time.delay(500)
             display_message(f"You lost, the word was:  {WORDS}", DESCRIPTION)
+            enter_to_continue()
+            RUN=False
             return False
     word_list.pop(WORD_INDEX)
     descriptions.pop(WORD_INDEX)
@@ -272,13 +282,17 @@ def main():
 
 title_screen()
 init()
-while True:
+while True and len(word_list)>0:
     WORD_INDEX = random.randint(0, len(word_list)-1)
     WORDS = word_list[WORD_INDEX].upper()
     init()
-    if not main():
+    if not main() or ATTEMPTS==0:
+        pygame.time.wait(1500)
         if gameOver():
             continue
         else:
             break
+if len(word_list)==0:
+    display_message("You've beat the game!! Thanks for playing!",f'High Score: {HIGH_SCORE}')
+    pygame.time.delay(5000)
 pygame.quit()
